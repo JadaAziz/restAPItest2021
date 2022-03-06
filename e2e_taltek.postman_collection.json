@@ -115,9 +115,9 @@
 									"const respData=pm.response.json();\r",
 									"const deletedStudent= respData.data.find(ds => ds.studentId === pm.environment.get(\"student_id\"));\r",
 									"\r",
-									"pm.test(\"Verify that student does exist anymore\", function(){\r",
+									"pm.test(\"Verify that student does exist\", function(){\r",
 									"    console.log(deletedStudent.studentId)\r",
-									"    pm.expect(deletedStudent.first_name).to.be.eql(environment.first_name);\r",
+									"    pm.expect(deletedStudent.firstName).to.be.eql(environment.first_name);\r",
 									"})"
 								],
 								"type": "text/javascript"
