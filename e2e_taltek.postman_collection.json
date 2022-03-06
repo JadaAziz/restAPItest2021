@@ -1,0 +1,545 @@
+{
+	"info": {
+		"_postman_id": "fab581bf-36e5-4804-aa10-6cb4b5de49f1",
+		"name": "e2e_taltek",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "E2E API Testing",
+			"item": [
+				{
+					"name": "Register new student",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.environment.set(\"first_name\", pm.variables.replaceIn(\"{{$randomFirstName}}\"));\r",
+									"pm.environment.set(\"last_name\", pm.variables.replaceIn(\"{{$randomLastName}}\"));\r",
+									"pm.environment.set(\"email\", pm.variables.replaceIn(\"{{$randomEmail}}\"));\r",
+									"pm.environment.set(\"dob_year\", _.random(1935,2013));\r",
+									"pm.environment.set(\"dob_day\", _.random(1,28));\r",
+									"pm.environment.set(\"dob_month\", _.random(1,12));\r",
+									"var i=_.random(0,1);\r",
+									"if(i>0){\r",
+									"    pm.environment.set(\"gender\",\"male\")\r",
+									"}else{\r",
+									"    pm.environment.set(\"gender\",\"female\")\r",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const resData=pm.response.json();\r",
+									"pm.test(\"Test to ensure status is 201\", function(){\r",
+									"    pm.expect(pm.response.to.have.status(201));\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Test success criteria\", function(){\r",
+									"    pm.expect(resData.success).to.be.true;\r",
+									"    pm.expect(resData.message).to.be.eql(\"Registration Success\", \"This message is incorrect.\");\r",
+									"})\r",
+									"\r",
+									"pm.environment.set(\"student_id\", resData.id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\"firstName\" : \"{{first_name}}\",\r\n    \"lastName\" : \"{{last_name}}\",\r\n    \"email\"     : \"API{{email}}\",\r\n    \"password\"  : \"123456\",\r\n    \"confirmPassword\"  : \"123456\",\r\n    \"dob\"       : {\r\n        \"year\"      : {{dob_year}},\r\n        \"month\"     : {{dob_month}},\r\n        \"day\"       : {{dob_day}}\r\n    },\r\n    \"gender\"    : \"{{gender}}\",\r\n    \"agree\"     : true\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}signup",
+							"host": [
+								"{{baseUrl}}signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify created info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData=pm.response.json();\r",
+									"pm.test(\"Verify created user\", function(){\r",
+									"    pm.expect(respData.data.studentId).to.be.eql(pm.environment.get(\"student_id\"));\r",
+									"})\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}student/{{student_id}}",
+							"host": [
+								"{{baseUrl}}student"
+							],
+							"path": [
+								"{{student_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify that student exist in all student call",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData=pm.response.json();\r",
+									"const deletedStudent= respData.data.find(ds => ds.studentId === pm.environment.get(\"student_id\"));\r",
+									"\r",
+									"pm.test(\"Verify that student does exist anymore\", function(){\r",
+									"    console.log(deletedStudent.studentId)\r",
+									"    pm.expect(deletedStudent.first_name).to.be.eql(environment.first_name);\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}students",
+							"host": [
+								"{{baseUrl}}students"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Log in as user",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData= pm.response.json();\r",
+									"pm.environment.set(\"bearer_token\", respData.token);\r",
+									"\r",
+									"\r",
+									"pm.test(\"Test that status code is 200\", function(){\r",
+									"pm.expect(pm.response.to.have.status(200));\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Test to verify criteria\", function(){\r",
+									"    pm.expect(respData.success).to.be.true;\r",
+									"    pm.expect(respData.message).to.be.eql(\"Login Success\", \"This response does not match.\");\r",
+									"   \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n \"id\": \"{{student_id}}\",\r\n \"password\": \"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}login",
+							"host": [
+								"{{baseUrl}}login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Student Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const resData= pm.response.json();\r",
+									"pm.test(\"Test that status code is 200\", function(){\r",
+									"pm.expect(pm.response.to.have.status(200));\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Test to verify criteria\", function(){\r",
+									"    pm.expect(resData.success).to.be.true;\r",
+									"    pm.expect(resData.message).to.be.eql(\"Update success\", \"This response does not match.\");\r",
+									"   \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\"firstName\" : \"{{first_name}}\",\r\n    \"lastName\" : \"{{last_name}}\",\r\n    \"email\"     : \"{{email}}\",\r\n    \"dob\"       : {\r\n        \"year\"      : {{dob_year}},\r\n        \"month\"     : {{dob_month}},\r\n        \"day\"       : {{dob_day}}\r\n    },\r\n    \"gender\"    : \"{{gender}}\",\r\n    \"agree\"     : true\r\n\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}student/{{student_id}}",
+							"host": [
+								"{{baseUrl}}student"
+							],
+							"path": [
+								"{{student_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify updated info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData=pm.response.json();\r",
+									"pm.test(\"Verify updated user\", function(){\r",
+									"    pm.expect(respData.data.studentId).to.be.eql(pm.environment.get(\"student_id\"));\r",
+									"})\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}student/{{student_id}}",
+							"host": [
+								"{{baseUrl}}student"
+							],
+							"path": [
+								"{{student_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData=pm.response.json();\r",
+									"pm.test(\"Verify that the password was updated\", function(){\r",
+									"pm.expect(pm.response.to.have.status(200));\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Test to verify criteria\", function(){\r",
+									"    pm.expect(respData.success).to.be.true;\r",
+									"    pm.expect(respData.message).to.be.eql(\"Password update success\", \"This response does not match.\");\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PATCH",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"password\"  : \"1234567\",\r\n    \"confirmPassword\"  : \"1234567\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}updatePassword/{{student_id}}",
+							"host": [
+								"{{baseUrl}}updatePassword"
+							],
+							"path": [
+								"{{student_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Log in as user with the old password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData= pm.response.json();\r",
+									"\r",
+									"\r",
+									"\r",
+									"pm.test(\"User should not be able to log in\", function(){\r",
+									"pm.expect(pm.response.to.have.status(401));\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Test to verify criteria\", function(){\r",
+									"    pm.expect(respData.success).to.be.false;\r",
+									" \r",
+									"   \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n \"id\": \"{{student_id}}\",\r\n \"password\": \"123456\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}login",
+							"host": [
+								"{{baseUrl}}login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Log in as user with the updated password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData= pm.response.json();\r",
+									"pm.environment.set(\"bearer_token\", respData.token);\r",
+									"\r",
+									"\r",
+									"pm.test(\"User should be able to log in\", function(){\r",
+									"pm.expect(pm.response.to.have.status(200));\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Test to verify criteria\", function(){\r",
+									"    pm.expect(respData.success).to.be.true;\r",
+									"    pm.expect(respData.message).to.be.eql(\"Login Success\", \"This message is incorrect\");\r",
+									"   \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n \"id\": \"{{student_id}}\",\r\n \"password\": \"1234567\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}login",
+							"host": [
+								"{{baseUrl}}login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Student Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const respData= pm.response.json();\r",
+									"\r",
+									"\r",
+									"pm.test(\"Test that status code is 200\", function(){\r",
+									"pm.expect(pm.response.to.have.status(200));\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Test to verify criteria\", function(){\r",
+									"    pm.expect(respData.success).to.be.true;\r",
+									"    pm.expect(respData.messages).to.be.eql(\"Data Deleted\", \"This response does not match.\");\r",
+									"   \r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{bearer_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}student/{{student_id}}",
+							"host": [
+								"{{baseUrl}}student"
+							],
+							"path": [
+								"{{student_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify that the User was deleted",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const resData=pm.response.json();\r",
+									"pm.test(\"Verify notfound status\", function(){\r",
+									" pm.expect(pm.response.to.have.status(404));\r",
+									"})\r",
+									"\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}student/{{student_id}}",
+							"host": [
+								"{{baseUrl}}student"
+							],
+							"path": [
+								"{{student_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all students data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const resData=pm.response.json();\r",
+									"const deletedStudent= resData.data.find(ds => ds.studentId == pm.environment.get(\"studentId\"));\r",
+									"\r",
+									"pm.test(\"Verify that student does not exist anymore\", function(){\r",
+									"    pm.expect(deletedStudent).to.be.undefined;\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}students",
+							"host": [
+								"{{baseUrl}}students"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
